@@ -34,8 +34,8 @@ exports.cadastrarUsuarios = (req, res, next)=> {
                     })
                 }
                 conn.query(
-                    'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
-                    [req.body.nome, req.body.email, hash],
+                    'INSERT INTO usuarios (nome, email, senha, permissao) VALUES (?, ?, ?, ?)',
+                    [req.body.nome, req.body.email, hash, 2],
                     (error, resultado, field) => {
                         conn.release();
                         
@@ -107,6 +107,7 @@ exports.loginUsuarios = (req, res, next)=>{
                         id_usuario: results[0].id,
                         nome: results[0].nome,
                         email: results[0].email,
+                        permissao: results[0].permissao
                     }, 
                     process.env.JWT_KEY, 
                     {

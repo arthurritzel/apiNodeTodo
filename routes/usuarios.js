@@ -8,12 +8,12 @@ router.post('/cadastro', usuariosController.cadastrarUsuarios);
 
 router.post("/login", usuariosController.loginUsuarios)
 
-router.get('/', usuariosController.getUsuarios)
+router.get('/', login.adm, usuariosController.getUsuarios)
 
-router.get('/:id', usuariosController.getById)
+router.get('/:id', login.adm, usuariosController.getById)
 
-router.patch('/', login, usuariosController.patch)
+router.patch('/', login.default, usuariosController.patch)
 
-router.delete('/:id', usuariosController.delete)
+router.delete('/:id', login.adm, usuariosController.delete)
 
 module.exports = router
