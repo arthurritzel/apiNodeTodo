@@ -1,0 +1,11 @@
+{
+    "env":{
+        "MYSQL_USER" : "root",
+        "MYSQL_PASSWORD" : "4rth1802",
+        "MYSQL_DATABASE" :"api_todo",
+        "MYSQL_HOST" : "localhost",
+        "MYSQL_PORT" : 3306,
+
+        "JWT_KEY": "segredo"
+    }
+}
