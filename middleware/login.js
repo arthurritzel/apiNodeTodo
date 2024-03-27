@@ -3,11 +3,13 @@ const jwt = require("jsonwebtoken");
 
 exports.default = (req, res, next)=>{
     try {
-        const token = req.headers.authorization.split(' ')[1]
+        const token = req.headers.authorization
+        console.log(req.headers.authorization)
         const decode = jwt.verify(token, process.env.JWT_KEY)
         req.usuario = decode
         next()
     } catch (error) {
+        console.log(error)
         return res.status(401).send({ mensagem: "Falha na autenticacao"})
     }
     
@@ -15,7 +17,7 @@ exports.default = (req, res, next)=>{
 
 exports.adm = (req, res, next)=>{
     try {
-        const token = req.headers.authorization.split(' ')[1]
+        const token = req.headers.authorization
         const decode = jwt.verify(token, process.env.JWT_KEY)
         req.usuario = decode
         if(decode.permissao != 1){
