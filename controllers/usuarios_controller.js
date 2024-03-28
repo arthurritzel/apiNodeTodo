@@ -155,6 +155,7 @@ exports.getUsuarios = (req, res, next) => {
                             nome: prod.nome,
                             email: prod.email,
                             senha: prod.senha,
+                            permissao: prod.permissao,
                             request: {
                                 tipo: 'GET',
                                 descricao: 'Retorna um usuario',
@@ -223,7 +224,108 @@ exports.getById = (req, res, next)=>{
     })
 }
 
-exports.patch = (req, res, next)=> {
+exports.patchSenha = (req, res, next) => {
+    mysql.getConnection((err, conn) => {
+        if (err) {
+            return res.status(500).send({
+                error: err,
+                response: null
+            });
+        }
+        conn.query("SELECT * FROM usuarios WHERE id = ?", [req.body.id], (error, results, fields) => {
+            if (error) {
+                return res.status(500).send({ error: error });
+            }
+            if (results.length < 1) {
+                return res.status(500).send({
+                    mensagem: "Falha na autenticação"
+                });
+            }
+            bcrypt.compare(req.body.senha, results[0].senha, (bcrypterr1, resultBcry) => {
+                if (bcrypterr1) {
+                    console.log("Erro ao comparar as senhas.");
+                    return res.status(401).send({
+                        mensagem: "Senha antiga inválida"
+                    });
+                }
+                if (resultBcry) {
+                    bcrypt.hash(req.body.senhaNova, 10, (errBcrypt, hash) => {
+                        if (errBcrypt) {
+                            return res.status(500).send({
+                                errBcrypt: errBcrypt,
+                                response: null
+                            });
+                        }
+                        conn.query(
+                            'UPDATE usuarios SET senha = ? WHERE id = ?',
+                            [hash, req.body.id],
+                            (error2, resultado, field) => {
+                                conn.release();
+                                if (error2) {
+                                    console.log("Erro ao atualizar a senha.");
+                                    return res.status(500).send({
+                                        error: error2,
+                                        response: null
+                                    });
+                                }
+                                console.log("Senha atualizada com sucesso.");
+                                return res.status(201).send({
+                                    mensagem: "Senha alterada com sucesso"
+                                });
+                            }
+                        );
+                    });
+                } else {
+                    console.log("Autenticação falhou.");
+                    return res.status(402).send({
+                        mensagem: "Falha na autenticação"
+                    });
+                }
+            });
+        });
+    });
+}
+
+exports.delete = (req, res, next)=> {
+    if(req.params.id != 8){
+        mysql.getConnection((err, conn)=>{
+            if (err) {
+                return res.status(500).send({
+                    error: err,
+                    response: null
+                });
+            }
+
+            conn.query(
+                "delete from usuarios where id = ?",
+                [req.params.id],
+                (error, resultado, fields)=>{
+                    conn.release();
+                    if (error) {
+                        return res.status(500).send({
+                            error: error,
+                            response: null
+                        });
+                    }
+
+                    const response = {
+                        mensagem: "Usuario removido com sucesso",
+                        
+                    }
+                    res.status(202).send({
+                        response
+                    })
+                }
+            )
+        })
+    }else{
+        return res.status(500).send({
+            mensagem: "Não é possivel remover esse usuario"
+        });
+    }
+}
+
+exports.patchNome = (req, res, next)=> {
     mysql.getConnection((err, conn)=>{
         if (err) {
             return res.status(500).send({
@@ -233,8 +335,8 @@ exports.patch = (req, res, next)=> {
         }
 
         conn.query(
-            `update usuarios set nome = ?, email = ?, senha = ? where id = ?;`,
-            [req.body.nome, req.body.email, req.body.senha, req.body.id],
+            `update usuarios set nome = ? where id = ?;`,
+            [req.body.nome, req.body.id_usuario],
             (error, resul, fields)=>{
                 conn.release();
                 if (error) {
@@ -244,18 +346,7 @@ exports.patch = (req, res, next)=> {
                     });
                 }
                 const response = {
-                    descricao: "Usuario modificado com sucesso",
-                    usuarioModificado : {
-                            id_usuario: req.body.insertId,
-                            nome: req.body.nome,
-                            email: req.body.email,
-                            senha: req.body.senha,
-                            request: {
-                                tipo: 'GET',
-                                descricao: 'Todos os usuarios',
-                                url: 'http://localhost:3000/usuarios/'
-                            }
-                        }
+                    mensagem: "Nome modificado com sucesso"
                     }
                 
 
@@ -268,7 +359,7 @@ exports.patch = (req, res, next)=> {
     })
 }
 
-exports.delete = (req, res, next)=> {
+exports.makeADM = (req, res, next)=> {
     mysql.getConnection((err, conn)=>{
         if (err) {
             return res.status(500).send({
@@ -278,9 +369,9 @@ exports.delete = (req, res, next)=> {
         }
 
         conn.query(
-            "delete from usuarios where id = ?",
-            [req.params.id],
-            (error, resultado, fields)=>{
+            `update usuarios set permissao = ? where id = ?;`,
+            [1, req.body.id_usuario],
+            (error, resul, fields)=>{
                 conn.release();
                 if (error) {
                     return res.status(500).send({
@@ -288,15 +379,56 @@ exports.delete = (req, res, next)=> {
                         response: null
                     });
                 }
-
                 const response = {
-                    mensagem: "Usuario removido com sucesso",
-                    
-                }
+                    mensagem: "Permissao modificada com sucesso"
+                    }
+                
+
                 res.status(202).send({
                     response
+                    
                 })
             }
         )
     })
+}
+
+exports.removeADM = (req, res, next)=> {
+    if(req.body.id_usuario != 8){
+        mysql.getConnection((err, conn)=>{
+            if (err) {
+                return res.status(500).send({
+                    error: err,
+                    response: null
+                });
+            }
+
+            conn.query(
+                `update usuarios set permissao = ? where id = ?;`,
+                [2, req.body.id_usuario],
+                (error, resul, fields)=>{
+                    conn.release();
+                    if (error) {
+                        return res.status(500).send({
+                            error: error,
+                            response: null
+                        });
+                    }
+                    const response = {
+                        mensagem: "Permissao modificada com sucesso"
+                        }
+                    
+
+                    res.status(202).send({
+                        response
+                        
+                    })
+                }
+            )
+        })
+    }else{
+        return res.status(500).send({
+            mensagem: "Não é possivel remover ADM desse usuario"
+        });
+    }
 }
